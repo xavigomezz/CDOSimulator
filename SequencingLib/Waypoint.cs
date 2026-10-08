@@ -32,7 +32,32 @@ namespace SequencingLib
         {
             Name = name;
             EntryPoint = entryPoint;
-
+            Waypoints = new List<Waypoint>();
+            Waypoints.Add(entryPoint);
         }
+        public void AddWaypoint(Waypoint wp)
+        { Waypoints.Add(wp);}
+        public double GetTotalDistance()
+        { return EntryPoint.DistanceToIAF; }
     }
+    public class FlightArrival
+    {
+        public string AircraftModel;
+        public string STARName;
+        public double MLWPercent;
+        public double DistanceToIAF;     // en km
+        public double EntryAltitude;      // en ft
+        public double TimeToIAF;          // en s
+        public TimeSpan TOA_IAF;          // hora calculada d'arribada a l'IAF
+        public int SequenceOrder;         // lloc en la cua (1r, 2n, etc.)
+        public double SeparationToPrev;   // separació amb l'anterior en segons
+
+        public FlightArrival(string aircraftModel, string starName, double mlwPercent, double distanceToIAF)
+        {
+            AircraftModel = aircraftModel;
+            STARName = starName;
+            MLWPercent = mlwPercent;
+            DistanceToIAF = distanceToIAF;
+        }
+        
 }
