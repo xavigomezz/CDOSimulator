@@ -57,8 +57,63 @@ namespace CDOSimulator
                 Console.WriteLine("--------------------------------------------------");
             }
 
-            Console.WriteLine("\nProves finalitzades. Prem Enter per tancar.");
-            Console.ReadLine();
+            
+            // SETMANA 3 -----------***SEQUENCING***----------------
+
+            // 1. Definim els 6 vols
+            Aircraft[] avions = new Aircraft[6];
+            avions[0] = b767;
+            avions[1] = b737;
+            avions[2] = b777;
+            avions[3] = b767;
+            avions[4] = a319;
+            avions[5] = a320;
+
+            string[] stars = new string[6] { "ALBER1Z", "PUMAL1Z", "MARTA3Z", "MATEX3Z", "LOBAR2W", "CASPE2W" };
+            double[] mlwPercents = new double[6] { 80, 100, 100, 80, 80, 100 };
+            double[] distanciesNM = new double[6] { 69.7, 51.0, 96.3, 102.6, 81.7, 88.6 };
+
+            // Vectors per guardar els resultats calculats
+            double[] distanciesKm = new double[6];
+            double[] altitudsEntradaFt = new double[6];
+            int[] tempsVolSegons = new int[6];
+            TimeSpan[] toasIAF = new TimeSpan[6];
+
+            TimeSpan horaEntrada = new TimeSpan(11, 45, 0);
+
+            // 2. Càlcul per a cada vol
+            for (int i = 0; i < 6; i++)
+            {
+                // Calculem el perfil CDO de l'avió
+                Trajectory traj = sim.GetCDO(avions[i], mlwPercents[i]);
+
+                double distMetres = distanciesNM[i] * 1852.0;
+                distanciesKm[i] = distMetres / 1000.0;
+                
+                // Ens quedem amb el segon de després
+                int s = 0;
+                while (s < traj.X.Count && traj.X[s] < distMetres)
+                    s++;
+                
+                tempsVolSegons[i] = s;
+                altitudsEntradaFt[i] = traj.H[s]; // Directament en peus (ft)
+                toasIAF[i] = horaEntrada.Add(TimeSpan.FromSeconds(s));
+            }
+
+            // 3. Mostrem les dades per pantalla
+            Console.WriteLine("==========================================================================================");
+            Console.WriteLine("***SEQUENCING***  ESCENARI 1: RESULTATS PREVIS A L'ORDENACIO");
+            Console.WriteLine("==========================================================================================");
+
+            for (int i = 0; i < 6; i++)
+            {
+                Console.WriteLine("Avio: " + avions[i].Model.PadRight(12) +
+                                  " | STAR: " + stars[i].PadRight(9) +
+                                  " | Dist: " + Math.Round(distanciesKm[i], 2) + " km" +
+                                  " | Alt Entrada: " + Math.Round(altitudsEntradaFt[i], 0) + " ft" +
+                                  " | Temps: " + tempsVolSegons[i] + " s" +
+                                  " | TOA IAF: " + toasIAF[i].ToString(@"hh\:mm\:ss"));
+            }
         }
 
     }

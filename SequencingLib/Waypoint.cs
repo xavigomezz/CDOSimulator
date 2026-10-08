@@ -59,5 +59,6 @@ namespace SequencingLib
             MLWPercent = mlwPercent;
             DistanceToIAF = distanceToIAF;
         }
+    }
         
 }
