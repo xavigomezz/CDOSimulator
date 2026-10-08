@@ -115,6 +115,70 @@ namespace CDOSimulator
                                   " | Temps: " + tempsVolSegons[i] + " s" +
                                   " | TOA IAF: " + toasIAF[i].ToString(@"hh\:mm\:ss"));
             }
+            // 4. Ordenació clàssica per hora d'arribada a l'IAF (de primer a últim)
+            for (int i = 0; i < 6 - 1; i++)
+            {
+                for (int j = 0; j < 6 - i - 1; j++)
+                {
+                    if (toasIAF[j] > toasIAF[j + 1])
+                    {
+                        // Intercanvi de TOA
+                        TimeSpan tempToa = toasIAF[j];
+                        toasIAF[j] = toasIAF[j + 1];
+                        toasIAF[j + 1] = tempToa;
+
+                        // Intercanvi de nom de STAR
+                        string tempStar = stars[j];
+                        stars[j] = stars[j + 1];
+                        stars[j + 1] = tempStar;
+
+                        // Intercanvi d'avió
+                        Aircraft tempAvio = avions[j];
+                        avions[j] = avions[j + 1];
+                        avions[j + 1] = tempAvio;
+
+                        // Intercanvi de percentatge MLW
+                        double tempMlw = mlwPercents[j];
+                        mlwPercents[j] = mlwPercents[j + 1];
+                        mlwPercents[j + 1] = tempMlw;
+
+                        // Intercanvi de distància
+                        double tempDist = distanciesKm[j];
+                        distanciesKm[j] = distanciesKm[j + 1];
+                        distanciesKm[j + 1] = tempDist;
+
+                        // Intercanvi d'altitud d'entrada
+                        double tempAlt = altitudsEntradaFt[j];
+                        altitudsEntradaFt[j] = altitudsEntradaFt[j + 1];
+                        altitudsEntradaFt[j + 1] = tempAlt;
+
+                        // Intercanvi de temps de vol
+                        int tempTemps = tempsVolSegons[j];
+                        tempsVolSegons[j] = tempsVolSegons[j + 1];
+                        tempsVolSegons[j + 1] = tempTemps;
+                    }
+                }
+            }
+            Console.WriteLine();
+            Console.WriteLine("--- ESCENARI 1: TAULA ORDENADA ---");
+
+            for (int i = 0; i < 6; i++)
+            {
+                int ordre = i + 1; // 1r, 2n, 3r, etc.
+
+                if (i == 0)
+                {
+                    // El primer avió no té ningú al davant
+                    Console.WriteLine("Ordre " + ordre + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF[i] + " - Separacio: Primer avio");
+                }
+                else
+                {
+                    // Als seguents, restem el temps d'aquest menys el de l'anterior
+                    int separacio = tempsVolSegons[i] - tempsVolSegons[i - 1];
+
+                    Console.WriteLine("Ordre " + ordre + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF[i] + " - Separacio: " + separacio + " segons");
+                }
+            }
         }
 
     }
