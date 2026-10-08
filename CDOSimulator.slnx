@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SequencingLib/SequencingLib.csproj" Id="090ca5ac-16aa-4d10-a732-8b340242b93c" />
+  <Project Path="WP1/CDOSimulator.csproj" Id="97f042e5-4809-4ad5-a7fb-909b308a68f4" />
+</Solution>
