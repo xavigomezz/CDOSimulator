@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using SequencingLib;
@@ -102,17 +103,17 @@ namespace CDOSimulator
             }
 
             // 3. Mostrem les dades per pantalla
-            Console.WriteLine("==========================================================================================");
-            Console.WriteLine("***SEQUENCING***  ESCENARI 1: RESULTATS PREVIS A L'ORDENACIO");
-            Console.WriteLine("==========================================================================================");
+            Console.WriteLine("========================================================================================================================");
+            Console.WriteLine("                         ***SEQUENCING***  SCENARIO 1: RESULTATS PREVIS A L'ORDENACIO");
+            Console.WriteLine("========================================================================================================================");
 
             for (int i = 0; i < 6; i++)
             {
                 Console.WriteLine("Avio: " + avions[i].Model.PadRight(12) +
-                                  " | STAR: " + stars[i].PadRight(9) +
-                                  " | Dist: " + Math.Round(distanciesKm[i], 2) + " km" +
+                                  " | STAR: " + stars[i].PadRight(8) +
+                                  " | Dist: " + Convert.ToString(Math.Round(distanciesKm[i], 2)).PadRight(6) + " km" +
                                   " | Alt Entrada: " + Math.Round(altitudsEntradaFt[i], 0) + " ft" +
-                                  " | Temps: " + tempsVolSegons[i] + " s" +
+                                  " | Temps: " + Convert.ToString(tempsVolSegons[i]).PadRight(4) + " s" +
                                   " | TOA IAF: " + toasIAF[i].ToString(@"hh\:mm\:ss"));
             }
             // 4. Ordenació clàssica per hora d'arribada a l'IAF (de primer a últim)
@@ -169,20 +170,22 @@ namespace CDOSimulator
                 if (i == 0)
                 {
                     // El primer avió no té ningú al davant
-                    Console.WriteLine("Ordre " + ordre + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF[i] + " - Separacio: Primer avio");
+                    Console.WriteLine(ordre + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | TOA: " + toasIAF[i] + " | Separació: Primer avió");
                 }
                 else
                 {
                     // Als seguents, restem el temps d'aquest menys el de l'anterior
                     int separacio = tempsVolSegons[i] - tempsVolSegons[i - 1];
 
-                    Console.WriteLine("Ordre " + ordre + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF[i] + " - Separacio: " + separacio + " segons");
+                    Console.WriteLine(ordre + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | TOA: " + toasIAF[i] + " | Separació: " + separacio + " segons");
                 }
             }
             Console.WriteLine();
-            Console.WriteLine("===============================================================================================================");
-            Console.WriteLine("                         SEQUENCING SCENARIO 2: 2-MINUTE FIXED SEPARATION AT IAF                               ");
-            Console.WriteLine("===============================================================================================================");
+            Console.WriteLine();
+            Console.WriteLine("========================================================================================================================");
+            Console.WriteLine("                         ***SEQUENCING***  SCENARIO 2: SEPARACIÓ DE 2 MINUTS A L'IAF");
+            Console.WriteLine("========================================================================================================================");
+            Console.WriteLine(" ");
 
             // Arrays para guardar los resultados del Escenario 2
             TimeSpan[] toasIAF2 = new TimeSpan[6];
@@ -210,8 +213,9 @@ namespace CDOSimulator
             }
 
             // 3. Mostramos la tabla requerida por la diapositiva 4[cite: 6]
-            Console.WriteLine("Aircraft     | STAR      | %MLW | TOA IAF Scenario 2 | Applied delay | TOA STAR entry WP Scenario 2");
-            Console.WriteLine("--------------------------------------------------------------------------------------------");
+            Console.WriteLine("--- TAULA 1. VOLS ORDENATS PER HORA D'ARRIBADA A L'IAF ---");
+            Console.WriteLine("Aircraft         | STAR    | %MLW         | TOA IAF            | Applied delay               | TOA STAR First WP");
+            Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
 
             for (int i = 0; i < 6; i++)
             {
@@ -225,36 +229,68 @@ namespace CDOSimulator
                     delayTexto = delaySegons2[i] + " s (avançament)";
                 }
 
-                Console.WriteLine("Avio: " + avions[i].Model.PadRight(12) +
-                                  " | STAR: " + stars[i].PadRight(9) +
-                                  " | MLW Percentage: " + Convert.ToString(mlwPercents[i]).PadRight(5) + "%" +
-                                  " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") +
-                                  " | CANVI D'HORA: " + delayTexto.PadRight(19) +
-                                  " | ENTRADA A LA STAR: " + horaEntrada2[i]);
+                Console.WriteLine("Avió: " + avions[i].Model.PadRight(10) +
+                                  " | " + stars[i].PadRight(6) +
+                                  " | MLW %: " + Convert.ToString(mlwPercents[i]).PadRight(4) + "%" +
+                                  " | ARRIBADA: " + toasIAF2[i].ToString(@"hh\:mm\:ss") +
+                                  " | DELAY: " + delayTexto.PadRight(20) +
+                                  " | ENTRADA STAR: " + horaEntrada2[i]);
 
+            }            
+            for (int i = 0; i < 6 - 1; i++) 
+            {
+                for (int j = 0; j < 6 - i - 1; j++)
+                {
+                    if (horaEntrada2[j] > horaEntrada2[j + 1])
+                    {
+                        // Intercanviem l'hora d'entrada a la STAR
+                        TimeSpan tempHora = horaEntrada2[j];
+                        horaEntrada2[j] = horaEntrada2[j + 1];
+                        horaEntrada2[j + 1] = tempHora;
+
+                        // Intercanviem l'hora d'arribada a l'IAF
+                        TimeSpan tempTOA = toasIAF2[j];
+                        toasIAF2[j] = toasIAF2[j + 1];
+                        toasIAF2[j + 1] = tempTOA;
+
+                        // Intercanviem el delay
+                        int tempDelay = delaySegons2[j];
+                        delaySegons2[j] = delaySegons2[j + 1];
+                        delaySegons2[j + 1] = tempDelay;
+
+                        // Intercanviem l'avió
+                        Aircraft tempAvio = avions[j];
+                        avions[j] = avions[j + 1];
+                        avions[j + 1] = tempAvio;
+
+                        // Intercanviem nom de l'STAR
+                        string tempStar = stars[j];
+                        stars[j] = stars[j + 1];
+                        stars[j + 1] = tempStar;
+
+                        // Intercanviem el % MLW
+                        double tempMLW = mlwPercents[j];
+                        mlwPercents[j] = mlwPercents[j + 1];
+                        mlwPercents[j + 1] = tempMLW;
+
+                        // Intercanviem temps de vol
+                        int tempTemps = tempsVolSegons[j];
+                        tempsVolSegons[j] = tempsVolSegons[j + 1];
+                        tempsVolSegons[j + 1] = tempTemps;
+                    }
+                }
             }
-
-            Console.WriteLine("---------------***TAULA SCENARIO 2 ORDENADA***------------------------");
-            Console.WriteLine(" ");
-            
+            Console.WriteLine();
+            Console.WriteLine("--- TAULA 2. VOLS REORDENATS PER HORA D'ENTRADA A LA STAR ---");
+            Console.WriteLine("Aircraft      | STAR    | TOA FIRST WP STAR      | TOA IAF           | Applied delay         | SEPARATION at IAF");
+            Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
             for (int i = 0; i < 6; i++)
             {
-                int ordre2 = i + 1; // 1r, 2n, 3r, etc.
-
-                if (i == 0)
-                {
-                    // El primer avió no té ningú al davant
-                    Console.WriteLine("Ordre " + ordre2 + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF2[i] + " - Separacio: Primer avio");
-                }
-                else
-                {
-                    // Als seguents, restem el temps d'aquest menys el de l'anterior
-                    int separacio2 = tempsVolSegons[i] - tempsVolSegons[i - 1];
-
-                    Console.WriteLine("Ordre " + ordre2 + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF2[i] + " - Avançament: " + delaySegons2[i] + " segons");
-                }
+                int orden = i + 1;
+                Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: 120s");
             }
 
+            Console.ReadLine();
 
 
         }
