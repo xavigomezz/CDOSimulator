@@ -179,6 +179,84 @@ namespace CDOSimulator
                     Console.WriteLine("Ordre " + ordre + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF[i] + " - Separacio: " + separacio + " segons");
                 }
             }
+            Console.WriteLine();
+            Console.WriteLine("===============================================================================================================");
+            Console.WriteLine("                         SEQUENCING SCENARIO 2: 2-MINUTE FIXED SEPARATION AT IAF                               ");
+            Console.WriteLine("===============================================================================================================");
+
+            // Arrays para guardar los resultados del Escenario 2
+            TimeSpan[] toasIAF2 = new TimeSpan[6];
+            TimeSpan[] horaEntrada2 = new TimeSpan[6];
+            int[] delaySegons2 = new int[6];
+
+            TimeSpan horaEntradaSTAR = new TimeSpan(11, 45, 0);
+
+            // 1. El primer avión mantiene su llegada al IAF intacta
+            toasIAF2[0] = toasIAF[0];
+            horaEntrada2[0] = horaEntradaSTAR;
+            delaySegons2[0] = 0;
+
+            // 2. Calculamos los siguientes aviones secuencialmente
+            for (int i = 1; i < 6; i++)
+            {
+                // Cada avión llega exactamente 120 segundos (2 minutos) después del anterior al IAF
+                toasIAF2[i] = toasIAF2[i - 1].Add(TimeSpan.FromSeconds(120));
+
+                // Su nueva hora de entrada a la STAR es la hora del IAF menos lo que tarda en volar la ruta
+                horaEntrada2[i] = toasIAF2[i].Add(TimeSpan.FromSeconds(-tempsVolSegons[i]));
+
+                // El retraso aplicado es la diferencia entre su nueva hora de entrada y las 11:45:00
+                delaySegons2[i] = (int)(horaEntrada2[i] - horaEntradaSTAR).TotalSeconds;
+            }
+
+            // 3. Mostramos la tabla requerida por la diapositiva 4[cite: 6]
+            Console.WriteLine("Aircraft     | STAR      | %MLW | TOA IAF Scenario 2 | Applied delay | TOA STAR entry WP Scenario 2");
+            Console.WriteLine("--------------------------------------------------------------------------------------------");
+
+            for (int i = 0; i < 6; i++)
+            {
+                string delayTexto = delaySegons2[i] + " s";
+                if (delaySegons2[i] > 0)
+                {
+                    delayTexto = "+" + delaySegons2[i] + " s (retard)";
+                }
+                else if (delaySegons2[i] < 0)
+                {
+                    delayTexto = delaySegons2[i] + " s (avançament)";
+                }
+
+                Console.WriteLine("Avio: " + avions[i].Model.PadRight(12) +
+                                  " | STAR: " + stars[i].PadRight(9) +
+                                  " | MLW Percentage: " + Convert.ToString(mlwPercents[i]).PadRight(5) + "%" +
+                                  " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") +
+                                  " | CANVI D'HORA: " + delayTexto.PadRight(19) +
+                                  " | ENTRADA A LA STAR: " + horaEntrada2[i]);
+
+            }
+
+            Console.WriteLine("---------------***TAULA SCENARIO 2 ORDENADA***------------------------");
+            Console.WriteLine(" ");
+            
+            for (int i = 0; i < 6; i++)
+            {
+                int ordre2 = i + 1; // 1r, 2n, 3r, etc.
+
+                if (i == 0)
+                {
+                    // El primer avió no té ningú al davant
+                    Console.WriteLine("Ordre " + ordre2 + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF2[i] + " - Separacio: Primer avio");
+                }
+                else
+                {
+                    // Als seguents, restem el temps d'aquest menys el de l'anterior
+                    int separacio2 = tempsVolSegons[i] - tempsVolSegons[i - 1];
+
+                    Console.WriteLine("Ordre " + ordre2 + ": " + avions[i].Model + " (" + stars[i] + ") - TOA: " + toasIAF2[i] + " - Avançament: " + delaySegons2[i] + " segons");
+                }
+            }
+
+
+
         }
 
     }
