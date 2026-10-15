@@ -10,6 +10,34 @@ namespace CDOSimulator
 {
     public class Program
     {
+        static void ComprovarRestriccions(STARRoute ruta, List<double> x, List<double> h)
+        {
+            Console.WriteLine("Comprovacio de restriccions per a: " + ruta.Name);
+
+            for (int w = 0; w < ruta.Waypoints.Count; w++)
+            {
+                Waypoint wp = ruta.Waypoints[w];
+
+                // Busquem el segon en què arriba a la distància d'aquell waypoint
+                int s = 0;
+                while (s < x.Count && x[s] < wp.DistanceToIAF)
+                {
+                    s++;
+                }
+
+                double altFt = h[s];
+                bool compleix = wp.IsAltitudeValid(altFt);
+
+                if (compleix)
+                {
+                    Console.WriteLine("  " + wp.Name + ": " + Math.Round(altFt, 0) + " ft [DESCENS CORRECTE - Dins dels limits]");
+                }
+                else
+                {
+                    Console.WriteLine("  " + wp.Name + ": " + Math.Round(altFt, 0) + " ft [DESCENS INCORRECTE - Fora dels limits!]");
+                }
+            }
+        }
         static void Main(string[] args)
         {
             Simulator sim = new Simulator();
@@ -290,8 +318,8 @@ namespace CDOSimulator
                 Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: 120s");
             }
 
-            Console.ReadLine();
 
+            Console.ReadLine();
 
         }
 

@@ -21,6 +21,13 @@ namespace SequencingLib
             MinAlt = minAlt;
             MaxAlt = maxAlt;
         }
+        public bool IsAltitudeValid(double altitudFt)
+        {
+            if (altitudFt >= MinAlt && altitudFt <= MaxAlt)
+                return true;
+            else
+                return false;
+        }
     }
     public class STARRoute
     {
@@ -39,6 +46,7 @@ namespace SequencingLib
         { Waypoints.Add(wp);}
         public double GetTotalDistance()
         { return EntryPoint.DistanceToIAF; }
+
     }
     public class FlightArrival
     {
