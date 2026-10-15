@@ -212,7 +212,7 @@ namespace CDOSimulator
                 delaySegons2[i] = (int)(horaEntrada2[i] - horaEntradaSTAR).TotalSeconds;
             }
 
-            // 3. Mostramos la tabla requerida por la diapositiva 4[cite: 6]
+            // 3. Mostramos la tabla requerida por la diapositiva 4
             Console.WriteLine("--- TAULA 1. VOLS ORDENATS PER HORA D'ARRIBADA A L'IAF ---");
             Console.WriteLine("Aircraft         | STAR    | %MLW         | TOA IAF            | Applied delay               | TOA STAR First WP");
             Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
