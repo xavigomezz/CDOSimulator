@@ -10,34 +10,6 @@ namespace CDOSimulator
 {
     public class Program
     {
-        static void ComprovarRestriccions(STARRoute ruta, List<double> x, List<double> h)
-        {
-            Console.WriteLine("Comprovacio de restriccions per a: " + ruta.Name);
-
-            for (int w = 0; w < ruta.Waypoints.Count; w++)
-            {
-                Waypoint wp = ruta.Waypoints[w];
-
-                // Busquem el segon en què arriba a la distància d'aquell waypoint
-                int s = 0;
-                while (s < x.Count && x[s] < wp.DistanceToIAF)
-                {
-                    s++;
-                }
-
-                double altFt = h[s];
-                bool compleix = wp.IsAltitudeValid(altFt);
-
-                if (compleix)
-                {
-                    Console.WriteLine("  " + wp.Name + ": " + Math.Round(altFt, 0) + " ft [DESCENS CORRECTE - Dins dels limits]");
-                }
-                else
-                {
-                    Console.WriteLine("  " + wp.Name + ": " + Math.Round(altFt, 0) + " ft [DESCENS INCORRECTE - Fora dels limits!]");
-                }
-            }
-        }
         static void Main(string[] args)
         {
             Simulator sim = new Simulator();
@@ -58,9 +30,9 @@ namespace CDOSimulator
             flota[3] = a320;
             flota[4] = a319;
             
-            Console.WriteLine("==================================================");
-            Console.WriteLine("    COMPROVACIÓ DE DESCENSOS (80% i 100% MLW)    ");
-            Console.WriteLine("==================================================");
+            Console.WriteLine("===========================================================");
+            Console.WriteLine("        COMPROVACIÓ DE DESCENSOS (80% i 100% MLW)");
+            Console.WriteLine("===========================================================");
 
             for (int i = 0; i < flota.Length; i++)
             {
@@ -84,7 +56,7 @@ namespace CDOSimulator
                 Console.WriteLine("Avió: " + avion.Model + " | 100% MLW");
                 Console.WriteLine("  Segons: " + puntos100 + " | Distància: " + Math.Round(distKm100, 2) + " km | Altitud: " + Math.Round(altFt100, 0) + " ft");
 
-                Console.WriteLine("--------------------------------------------------");
+                Console.WriteLine("----------------------------------------------------------");
             }
 
             
@@ -344,17 +316,13 @@ namespace CDOSimulator
 
                     int s = 0;
                     while (s < traj.X.Count - 1 && traj.X[s] < wp.DistanceToIAF)
-                    {
                         s++;
-                    }
 
                     double altAvioFt = traj.H[s];
                     bool esValid = wp.IsAltitudeValid(altAvioFt);
 
                     if (!esValid)
-                    {
                         totsValids = false;
-                    }
 
                     string estat = esValid ? "[OK]" : "[FORA DE LIMITS]";
                     double distNM = Math.Round(wp.DistanceToIAF / 1852.0, 1);
