@@ -318,6 +318,56 @@ namespace CDOSimulator
                 Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: 120s");
             }
 
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("========================================================================================================================");
+            Console.WriteLine("                               COMPROVACIO DE RESTRICCIONS D'ALTITUD ALS WAYPOINTS");
+            Console.WriteLine("========================================================================================================================");
+
+            for (int i = 0; i < 6; i++)
+            {
+                STARRoute ruta = Waypoint.GetLEBLStar(stars[i]);
+                Trajectory traj = sim.GetCDO(avions[i], mlwPercents[i]);
+
+                Console.WriteLine();
+                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
+                Console.WriteLine("Vol " + (i + 1) + ": " + avions[i].Model + " | STAR: " + ruta.Name + " (" + mlwPercents[i] + "% MLW)");
+                Console.WriteLine("Waypoint | Dist. IAF (NM) | Altitud CDO (ft) | Finestra permesa (ft) | Estat");
+                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
+
+                bool totsValids = true;
+
+                for (int w = 0; w < ruta.Waypoints.Count; w++)
+                {
+                    Waypoint wp = ruta.Waypoints[w];
+
+                    int s = 0;
+                    while (s < traj.X.Count - 1 && traj.X[s] < wp.DistanceToIAF)
+                    {
+                        s++;
+                    }
+
+                    double altAvioFt = traj.H[s];
+                    bool esValid = wp.IsAltitudeValid(altAvioFt);
+
+                    if (!esValid)
+                    {
+                        totsValids = false;
+                    }
+
+                    string estat = esValid ? "[OK]" : "[FORA DE LIMITS]";
+                    double distNM = Math.Round(wp.DistanceToIAF / 1852.0, 1);
+                    string finestra = (wp.MinAlt == 0.0 ? "No min" : wp.MinAlt + " ft") + " - " + (wp.MaxAlt >= 40000.0 ? "No max" : wp.MaxAlt + " ft");
+
+                    Console.WriteLine(wp.Name.PadRight(8) + " | " + distNM.ToString().PadRight(14) + " | " + Math.Round(altAvioFt, 0).ToString().PadRight(16) + " | " + finestra.PadRight(21) + " | " + estat);
+                }
+
+                if (totsValids)
+                    Console.WriteLine(">> RESULTAT: Totes les restriccions d'aquesta STAR es compleixen.");
+                else
+                    Console.WriteLine(">> RESULTAT: ATENCIO, hi ha restriccions que NO es compleixen en aquest perfil CDO!");
+            }
 
             Console.ReadLine();
 

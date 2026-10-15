@@ -80,7 +80,7 @@ namespace CDOSimulator
             double fuelFlow = aircraft.CF1 * (1 - (speed / aircraft.CF2)); // Els CF estan en minuts llavors està en kg/min
             double fuelFlowKgPerSec = fuelFlow / 60.0;
 
-            double fuelBurned = fuelFlowKgPerSec * Math.Abs(deltaT); // Assegurem que surti una quantitat de fuel cremat positiva
+            double fuelBurned = fuelFlowKgPerSec * deltaT; // La quantitat de fuel cremat queda negativa
             return fuelBurned;
         }
 

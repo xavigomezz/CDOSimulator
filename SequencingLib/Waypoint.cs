@@ -11,76 +11,67 @@ namespace SequencingLib
     {
         public string Name;
         public double DistanceToIAF; // en metres
-        public double MinAlt; // en ft (0 si no hi ha restricció)
-        public double MaxAlt; // en ft (40000 si no hi ha restricció)
+        public double MinAlt;        // en ft (0 si no hi ha restricció)
+        public double MaxAlt;        // en ft (40000 si no hi ha restricció)
 
-        public Waypoint(string name, double distanceToIAF, double minAlt = 0.0, double maxAlt = 40000.0)
+        public Waypoint(string name, double distanceToIAF_Metres, double minAlt = 0.0, double maxAlt = 40000.0)
         {
             Name = name;
-            DistanceToIAF = distanceToIAF;
+            DistanceToIAF = distanceToIAF_Metres;
             MinAlt = minAlt;
             MaxAlt = maxAlt;
         }
         public bool IsAltitudeValid(double altitudFt)
         {
-            if (altitudFt >= MinAlt && altitudFt <= MaxAlt)
-                return true;
-            else
-                return false;
+            return (altitudFt >= MinAlt && altitudFt <= MaxAlt);
         }
-
-        // RESTRICCIONS D'ALTITUD DE LES STAR (LEBL RWY 24L)
-        // Font: AIP ENAIRE AD 2-LEBL STAR 3.4-3.6 (Procedure tabular description), AIRAC AMDT 09/23
-        // "-FLxxx" a l'AIP = at or below -> MaxAlt ; "+FLxxx" = at or above -> MinAlt ; FLxxx = xxx*100 ft
-        // Distància = distància acumulada sobre la STAR fins a l'IAF (SLL), en NM -> metres
-        const double NM = 1852.0;
-
+        const double NMtoM = 1852.0;
         public static List<STARRoute> GetLEBLStars()
         {
             List<STARRoute> stars = new List<STARRoute>();
 
-            STARRoute alber = new STARRoute("ALBER1Z", new Waypoint("ALBER", 69.7 * NM, 11000, 25000));
-            alber.AddWaypoint(new Waypoint("CUTXE", 50.2 * NM));
-            alber.AddWaypoint(new Waypoint("UTHAN", 27.8 * NM));
-            alber.AddWaypoint(new Waypoint("ENJUC", 17.3 * NM, minAlt: 8000));
-            alber.AddWaypoint(new Waypoint("UCREQ", 10.4 * NM, maxAlt: 10000));
+            STARRoute alber = new STARRoute("ALBER1Z", new Waypoint("ALBER", 69.7 * NMtoM, 11000, 25000));
+            alber.AddWaypoint(new Waypoint("CUTXE", 50.2 * NMtoM));
+            alber.AddWaypoint(new Waypoint("UTHAN", 27.8 * NMtoM));
+            alber.AddWaypoint(new Waypoint("ENJUC", 17.3 * NMtoM, minAlt: 8000));
+            alber.AddWaypoint(new Waypoint("UCREQ", 10.4 * NMtoM, maxAlt: 10000));
             alber.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(alber);
 
-            STARRoute pumal = new STARRoute("PUMAL1Z", new Waypoint("PUMAL", 51.0 * NM, 13000, 25000));
-            pumal.AddWaypoint(new Waypoint("BERGA", 39.2 * NM, minAlt: 12000));
-            pumal.AddWaypoint(new Waypoint("KOSIT", 25.0 * NM));
-            pumal.AddWaypoint(new Waypoint("MAMUK", 19.1 * NM, minAlt: 8000));
-            pumal.AddWaypoint(new Waypoint("UCREQ", 10.4 * NM, maxAlt: 10000));
+            STARRoute pumal = new STARRoute("PUMAL1Z", new Waypoint("PUMAL", 51.0 * NMtoM, 13000, 25000));
+            pumal.AddWaypoint(new Waypoint("BERGA", 39.2 * NMtoM, minAlt: 12000));
+            pumal.AddWaypoint(new Waypoint("KOSIT", 25.0 * NMtoM));
+            pumal.AddWaypoint(new Waypoint("MAMUK", 19.1 * NMtoM, minAlt: 8000));
+            pumal.AddWaypoint(new Waypoint("UCREQ", 10.4 * NMtoM, maxAlt: 10000));
             pumal.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(pumal);
 
-            STARRoute marta = new STARRoute("MARTA3Z", new Waypoint("MARTA", 96.3 * NM, maxAlt: 24000));
-            marta.AddWaypoint(new Waypoint("EBROX", 75.0 * NM, minAlt: 10000));
-            marta.AddWaypoint(new Waypoint("RES", 48.7 * NM));
-            marta.AddWaypoint(new Waypoint("VLA", 27.5 * NM));
-            marta.AddWaypoint(new Waypoint("BL463", 10.0 * NM, maxAlt: 10000));
+            STARRoute marta = new STARRoute("MARTA3Z", new Waypoint("MARTA", 96.3 * NMtoM, maxAlt: 24000));
+            marta.AddWaypoint(new Waypoint("EBROX", 75.0 * NMtoM, minAlt: 10000));
+            marta.AddWaypoint(new Waypoint("RES", 48.7 * NMtoM));
+            marta.AddWaypoint(new Waypoint("VLA", 27.5 * NMtoM));
+            marta.AddWaypoint(new Waypoint("BL463", 10.0 * NMtoM, maxAlt: 10000));
             marta.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(marta);
 
-            STARRoute matex = new STARRoute("MATEX3Z", new Waypoint("MATEX", 102.6 * NM, maxAlt: 28000));
-            matex.AddWaypoint(new Waypoint("SENIA", 74.0 * NM, minAlt: 10000));
-            matex.AddWaypoint(new Waypoint("RES", 48.7 * NM));
-            matex.AddWaypoint(new Waypoint("VLA", 27.5 * NM));
-            matex.AddWaypoint(new Waypoint("BL463", 10.0 * NM, maxAlt: 10000));
+            STARRoute matex = new STARRoute("MATEX3Z", new Waypoint("MATEX", 102.6 * NMtoM, maxAlt: 28000));
+            matex.AddWaypoint(new Waypoint("SENIA", 74.0 * NMtoM, minAlt: 10000));
+            matex.AddWaypoint(new Waypoint("RES", 48.7 * NMtoM));
+            matex.AddWaypoint(new Waypoint("VLA", 27.5 * NMtoM));
+            matex.AddWaypoint(new Waypoint("BL463", 10.0 * NMtoM, maxAlt: 10000));
             matex.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(matex);
 
-            STARRoute lobar = new STARRoute("LOBAR2W", new Waypoint("LOBAR", 81.7 * NM, maxAlt: 28000));
-            lobar.AddWaypoint(new Waypoint("PEKIS", 45.0 * NM, 16000, 20000));
-            lobar.AddWaypoint(new Waypoint("BL461", 10.0 * NM, maxAlt: 10000));
+            STARRoute lobar = new STARRoute("LOBAR2W", new Waypoint("LOBAR", 81.7 * NMtoM, maxAlt: 28000));
+            lobar.AddWaypoint(new Waypoint("PEKIS", 45.0 * NMtoM, 16000, 20000));
+            lobar.AddWaypoint(new Waypoint("BL461", 10.0 * NMtoM, maxAlt: 10000));
             lobar.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(lobar);
 
-            STARRoute caspe = new STARRoute("CASPE2W", new Waypoint("CASPE", 88.6 * NM, maxAlt: 28000));
-            caspe.AddWaypoint(new Waypoint("MECUH", 47.6 * NM, 16000, 20000));
-            caspe.AddWaypoint(new Waypoint("VIBOK", 27.5 * NM, maxAlt: 15000));
-            caspe.AddWaypoint(new Waypoint("BL461", 10.0 * NM, maxAlt: 10000));
+            STARRoute caspe = new STARRoute("CASPE2W", new Waypoint("CASPE", 88.6 * NMtoM, maxAlt: 28000));
+            caspe.AddWaypoint(new Waypoint("MECUH", 47.6 * NMtoM, 16000, 20000));
+            caspe.AddWaypoint(new Waypoint("VIBOK", 27.5 * NMtoM, maxAlt: 15000));
+            caspe.AddWaypoint(new Waypoint("BL461", 10.0 * NMtoM, maxAlt: 10000));
             caspe.AddWaypoint(new Waypoint("SLL", 0.0, minAlt: 6000));
             stars.Add(caspe);
 
