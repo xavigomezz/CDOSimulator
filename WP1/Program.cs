@@ -181,7 +181,6 @@ namespace CDOSimulator
                 }
             }
             Console.WriteLine();
-            Console.WriteLine();
             Console.WriteLine("========================================================================================================================");
             Console.WriteLine("                         ***SEQUENCING***  SCENARIO 2: SEPARACIÓ DE 2 MINUTS A L'IAF");
             Console.WriteLine("========================================================================================================================");
@@ -290,51 +289,190 @@ namespace CDOSimulator
                 Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: 120s");
             }
 
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
+            // ==========================================================================================
+            // AVALUACIÓ PER LÍMITS D'ALTITUD (MIN / MAX) PER A LES 6 STARS
+            // ==========================================================================================
+
+
+            Console.WriteLine("\n\n\n\n");
             Console.WriteLine("========================================================================================================================");
             Console.WriteLine("                               COMPROVACIO DE RESTRICCIONS D'ALTITUD ALS WAYPOINTS");
             Console.WriteLine("========================================================================================================================");
 
-            for (int i = 0; i < 6; i++)
+            Aircraft[] flota1 = new Aircraft[] { a319, a320, b737, b767, b777 };
+            double[] pesos = new double[] { 80.0, 100.0 };
+
+            // 1. Guardem les 10 trajectòries i els 10 noms
+            Trajectory[] trajs = new Trajectory[10];
+            string[] noms = new string[10];
+            int c = 0;
+            for (int a = 0; a < 5; a++)
             {
-                STARRoute ruta = Waypoint.GetLEBLStar(stars[i]);
-                Trajectory traj = sim.GetCDO(avions[i], mlwPercents[i]);
+                for (int p = 0; p < 2; p++)
+                {
+                    trajs[c] = sim.GetCDO(flota1[a], pesos[p]);
+                    noms[c] = flota1[a].Model + " (" + pesos[p] + "%)";
+                    c++;
+                }
+            }
 
-                Console.WriteLine();
-                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
-                Console.WriteLine("Vol " + (i + 1) + ": " + avions[i].Model + " | STAR: " + ruta.Name + " (" + mlwPercents[i] + "% MLW)");
-                Console.WriteLine("Waypoint | Dist. IAF (NM) | Altitud CDO (ft) | Finestra permesa (ft) | Estat");
-                Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
+            List<STARRoute> totesStars = Waypoint.GetLEBLStars();
 
-                bool totsValids = true;
+            // 2. Recorrem les 6 STARs
+            for (int s = 0; s < totesStars.Count; s++)
+            {
+                STARRoute ruta = totesStars[s];
+                Console.WriteLine("\n\n===================================== STAR: " + ruta.Name + " =====================================");
 
+                bool[] viu = new bool[10];
+                for (int k = 0; k < 10; k++) viu[k] = true;
+
+                // Recorrem els waypoints de la STAR
                 for (int w = 0; w < ruta.Waypoints.Count; w++)
                 {
                     Waypoint wp = ruta.Waypoints[w];
 
-                    int s = 0;
-                    while (s < traj.X.Count - 1 && traj.X[s] < wp.DistanceToIAF)
-                        s++;
+                    // Llista on guardem les altituds dels avions vius
+                    List<double> altitudsReals = new List<double>();
+                    string eliminatsText = "";
 
-                    double altAvioFt = traj.H[s];
-                    bool esValid = wp.IsAltitudeValid(altAvioFt);
+                    for (int k = 0; k < 10; k++)
+                    {
+                        if (viu[k] == true)
+                        {
+                            int idx = 0;
+                            while (idx < trajs[k].X.Count - 1 && trajs[k].X[idx] < wp.DistanceToIAF)
+                            {
+                                idx++;
+                            }
 
-                    if (!esValid)
-                        totsValids = false;
+                            double altCDO = trajs[k].H[idx];
+                            altitudsReals.Add(altCDO); // Afegim l'altitud real a la llista
 
-                    string estat = esValid ? "[OK]" : "[FORA DE LIMITS]";
-                    double distNM = Math.Round(wp.DistanceToIAF / 1852.0, 1);
-                    string finestra = (wp.MinAlt == 0.0 ? "No min" : wp.MinAlt + " ft") + " - " + (wp.MaxAlt >= 40000.0 ? "No max" : wp.MaxAlt + " ft");
+                            if (wp.IsAltitudeValid(altCDO) == false)
+                            {
+                                viu[k] = false;
+                                eliminatsText += "    [X] " + noms[k] + " eliminat (" + Math.Round(altCDO, 0) + " ft)\n";
+                            }
+                        }
+                    }
 
-                    Console.WriteLine(wp.Name.PadRight(8) + " | " + distNM.ToString().PadRight(14) + " | " + Math.Round(altAvioFt, 0).ToString().PadRight(16) + " | " + finestra.PadRight(21) + " | " + estat);
+                    // Ordenem la llista de menor a major per agafar la primera i l'última
+                    if (altitudsReals.Count > 0)
+                    {
+                        altitudsReals.Sort();
+                        double minReal = altitudsReals[0]; // El primer és el més baix
+                        double maxReal = altitudsReals[altitudsReals.Count - 1]; // L'últim és el més alt
+
+                        Console.WriteLine("Punt " + wp.Name + " (" + Math.Round(wp.DistanceToIAF / 1852.0, 1) + " NM) -> " +
+                                          "Limits carta: [" + wp.MinAlt + " - " + wp.MaxAlt + " ft] | " +
+                                          "Rang flota: [" + Math.Round(minReal, 0) + " - " + Math.Round(maxReal, 0) + " ft]");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Punt " + wp.Name + " -> Cap avió ha complert els límits anteriors.");
+                    }
+
+                    if (eliminatsText != "")
+                    {
+                        Console.Write(eliminatsText);
+                    }
                 }
 
-                if (totsValids)
-                    Console.WriteLine(">> RESULTAT: Totes les restriccions d'aquesta STAR es compleixen.");
+                // 3. Recompte final i llistat dels avions que compleixen
+                int aprovats = 0;
+                string avionsAprovatsText = "";
+
+                for (int k = 0; k < 10; k++)
+                {
+                    if (viu[k] == true)
+                    {
+                        aprovats++;
+                        avionsAprovatsText += "    [OK] " + noms[k] + "\n";
+                    }
+                }
+
+                Console.WriteLine("\n>> Total avions que compleixen tota la STAR " + ruta.Name + ": " + aprovats + " de 10");
+
+                if (aprovats > 0)
+                {
+                    Console.WriteLine("   Avions que superen la STAR:");
+                    Console.Write(avionsAprovatsText);
+                }
                 else
-                    Console.WriteLine(">> RESULTAT: ATENCIO, hi ha restriccions que NO es compleixen en aquest perfil CDO!");
+                {
+                    Console.WriteLine("   Cap avió ha completat aquesta STAR.");
+                }
+            }
+            
+            // Resum final senzill per STAR: per cada STAR mostrar els models que la compleixen
+            Console.WriteLine("\n\n------------- RESUM FINAL PER STAR -------------");
+            for (int s = 0; s < totesStars.Count; s++)
+            {
+                STARRoute ruta = totesStars[s];
+
+                // Copiem la comprovació feta abans però en un bloc independent per obtenir els aprovats
+                bool[] viu2 = new bool[10];
+                for (int k = 0; k < 10; k++) viu2[k] = true;
+
+                for (int w = 0; w < ruta.Waypoints.Count; w++)
+                {
+                    Waypoint wp = ruta.Waypoints[w];
+                    for (int k = 0; k < 10; k++)
+                    {
+                        if (viu2[k])
+                        {
+                            int idx = 0;
+                            while (idx < trajs[k].X.Count - 1 && trajs[k].X[idx] < wp.DistanceToIAF)
+                            {
+                                idx++;
+                            }
+
+                            double altCDO = trajs[k].H[idx];
+                            if (!wp.IsAltitudeValid(altCDO))
+                            {
+                                viu2[k] = false;
+                            }
+                        }
+                    }
+                }
+
+                // Construïm una llista de línies a imprimir per aquesta STAR
+                List<string> linies = new List<string>();
+                for (int m = 0; m < 5; m++)
+                {
+                    string model = flota1[m].Model;
+                    int idx80 = m * 2;
+                    int idx100 = m * 2 + 1;
+                    bool ok80 = false;
+                    bool ok100 = false;
+                    if (idx80 >= 0 && idx80 < 10) ok80 = viu2[idx80];
+                    if (idx100 >= 0 && idx100 < 10) ok100 = viu2[idx100];
+
+                    if (ok80 && ok100)
+                    {
+                        linies.Add("    ELS DOS " + model);
+                    }
+                    else if (ok80)
+                    {
+                        linies.Add("    EL " + model + " al 80%");
+                    }
+                    else if (ok100)
+                    {
+                        linies.Add("    EL " + model + " al 100%");
+                    }
+                    // si no compleix cap, no afegim res
+                }
+
+                // Només imprimim la STAR si hi ha almenys una línia (model) per mostrar
+                if (linies.Count > 0)
+                {
+                    Console.WriteLine("\nSTAR: " + ruta.Name);
+                    for (int i = 0; i < linies.Count; i++)
+                    {
+                        Console.WriteLine(linies[i]);
+                    }
+                }
             }
 
             Console.ReadLine();
