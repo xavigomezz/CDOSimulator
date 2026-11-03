@@ -21,10 +21,13 @@ namespace SequencingLib
             MinAlt = minAlt;
             MaxAlt = maxAlt;
         }
+        // Agafo una altitud, comprovo si està dins dels límits del waypoint i retorno si és vàlida.
         public bool IsAltitudeValid(double altitudFt)
         {
             return (altitudFt >= MinAlt && altitudFt <= MaxAlt);
         }
+
+        // Agafo les dades definides de les STAR de LEBL, creo totes les rutes amb els seus waypoints i les retorno.
         const double NMtoM = 1852.0;
         public static List<STARRoute> GetLEBLStars()
         {
@@ -78,6 +81,7 @@ namespace SequencingLib
             return stars;
         }
 
+        // Agafo el nom d'una STAR, busco la ruta corresponent entre les STAR de LEBL i la retorno o retorno null si no existeix.
         public static STARRoute GetLEBLStar(string name)
         {
             foreach (STARRoute star in GetLEBLStars())
@@ -92,6 +96,7 @@ namespace SequencingLib
         public Waypoint EntryPoint;
         public List<Waypoint> Waypoints;
         
+        // Constructor: agafo el nom i el punt d'entrada, creo la ruta STAR i no retorno cap valor.
         public STARRoute(string name, Waypoint entryPoint)
         {
             Name = name;
@@ -99,8 +104,12 @@ namespace SequencingLib
             Waypoints = new List<Waypoint>();
             Waypoints.Add(entryPoint);
         }
+
+        // Agafo un waypoint, l'afegeixo a la ruta STAR i no retorno cap valor.
         public void AddWaypoint(Waypoint wp)
         { Waypoints.Add(wp);}
+
+        // Agafo el punt d'entrada de la ruta, consulto la seva distància fins a l'IAF i la retorno.
         public double GetTotalDistance()
         { return EntryPoint.DistanceToIAF; }
 
@@ -117,6 +126,7 @@ namespace SequencingLib
         public int SequenceOrder;         // lloc en la cua (1r, 2n, etc.)
         public double SeparationToPrev;   // separació amb l'anterior en segons
 
+        // Constructor: agafo les dades del vol, creo l'arribada a la STAR i no retorno cap valor.
         public FlightArrival(string aircraftModel, string starName, double mlwPercent, double distanceToIAF)
         {
             AircraftModel = aircraftModel;

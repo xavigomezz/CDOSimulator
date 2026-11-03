@@ -338,18 +338,12 @@ namespace CDOSimulator
 
                     for (int k = 0; k < 10; k++)
                     {
-                        if (viu[k] == true)
+                        if (viu[k])
                         {
-                            int idx = 0;
-                            while (idx < trajs[k].X.Count - 1 && trajs[k].X[idx] < wp.DistanceToIAF)
-                            {
-                                idx++;
-                            }
-
-                            double altCDO = trajs[k].H[idx];
+                            double altCDO = sim.GetAltitudeAtWaypoint(trajs[k], wp);
                             altitudsReals.Add(altCDO); // Afegim l'altitud real a la llista
 
-                            if (wp.IsAltitudeValid(altCDO) == false)
+                            if (!wp.IsAltitudeValid(altCDO))
                             {
                                 viu[k] = false;
                                 eliminatsText += "    [X] " + noms[k] + " eliminat (" + Math.Round(altCDO, 0) + " ft)\n";
@@ -385,7 +379,7 @@ namespace CDOSimulator
 
                 for (int k = 0; k < 10; k++)
                 {
-                    if (viu[k] == true)
+                    if (viu[k])
                     {
                         aprovats++;
                         avionsAprovatsText += "    [OK] " + noms[k] + "\n";
@@ -407,33 +401,28 @@ namespace CDOSimulator
             
             // Resum final senzill per STAR: per cada STAR mostrar els models que la compleixen
             Console.WriteLine("\n\n------------- RESUM FINAL PER STAR -------------");
+            List<string> starsNoSuperades = new List<string>();
             for (int s = 0; s < totesStars.Count; s++)
             {
                 STARRoute ruta = totesStars[s];
 
-                // Copiem la comprovació feta abans però en un bloc independent per obtenir els aprovats
                 bool[] viu2 = new bool[10];
-                for (int k = 0; k < 10; k++) viu2[k] = true;
+                for (int k = 0; k < 10; k++)
+                    viu2[k] = true;
 
                 for (int w = 0; w < ruta.Waypoints.Count; w++)
                 {
                     Waypoint wp = ruta.Waypoints[w];
+
                     for (int k = 0; k < 10; k++)
                     {
-                        if (viu2[k])
-                        {
-                            int idx = 0;
-                            while (idx < trajs[k].X.Count - 1 && trajs[k].X[idx] < wp.DistanceToIAF)
-                            {
-                                idx++;
-                            }
+                        if (viu2[k] == false)
+                            continue;
 
-                            double altCDO = trajs[k].H[idx];
-                            if (!wp.IsAltitudeValid(altCDO))
-                            {
-                                viu2[k] = false;
-                            }
-                        }
+                        double altCDO = sim.GetAltitudeAtWaypoint(trajs[k], wp);
+
+                        if (wp.IsAltitudeValid(altCDO) == false)
+                            viu2[k] = false;
                     }
                 }
 
@@ -446,21 +435,20 @@ namespace CDOSimulator
                     int idx100 = m * 2 + 1;
                     bool ok80 = false;
                     bool ok100 = false;
-                    if (idx80 >= 0 && idx80 < 10) ok80 = viu2[idx80];
-                    if (idx100 >= 0 && idx100 < 10) ok100 = viu2[idx100];
+                    if (idx80 >= 0 && idx80 < 10)
+                        ok80 = viu2[idx80];
+                    if (idx100 >= 0 && idx100 < 10)
+                        ok100 = viu2[idx100];
 
                     if (ok80 && ok100)
-                    {
                         linies.Add("    ELS DOS " + model);
-                    }
+                    
                     else if (ok80)
-                    {
                         linies.Add("    EL " + model + " al 80%");
-                    }
+                    
                     else if (ok100)
-                    {
                         linies.Add("    EL " + model + " al 100%");
-                    }
+                    
                     // si no compleix cap, no afegim res
                 }
 
@@ -469,14 +457,17 @@ namespace CDOSimulator
                 {
                     Console.WriteLine("\nSTAR: " + ruta.Name);
                     for (int i = 0; i < linies.Count; i++)
-                    {
                         Console.WriteLine(linies[i]);
-                    }
+                }
+                else
+                {
+                    starsNoSuperades.Add(ruta.Name);
                 }
             }
 
+            if (starsNoSuperades.Count > 0)
+                Console.WriteLine("\nSTARs no superades per cap avió: " + string.Join(", ", starsNoSuperades));
             Console.ReadLine();
-
         }
 
     }

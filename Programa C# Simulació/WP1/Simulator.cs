@@ -139,5 +139,20 @@ namespace CDOSimulator
 
             return trajectory;
         }
+
+        public double GetAltitudeAtWaypoint(Trajectory trajectory, Waypoint waypoint)
+        {
+            // Agafo la trajectoria CDO i el waypoint, recorro els punts fins a trobar el punt del waypoint y retorno la'altitud d'aquest punt'.
+
+            if (trajectory == null || waypoint == null || trajectory.X == null || trajectory.H == null || trajectory.X.Count == 0 || trajectory.H.Count == 0)
+                return double.NaN;
+            
+            int i = 0;
+
+            while (i < trajectory.X.Count - 1 && i < trajectory.H.Count - 1 && trajectory.X[i] < waypoint.DistanceToIAF)
+                i++;
+            
+            return trajectory.H[i];
+        }
     }
 }
