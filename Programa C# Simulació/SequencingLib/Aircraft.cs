@@ -28,7 +28,7 @@ namespace SequencingLib
 
         // CONSTRUCTOR
         public Aircraft(string model, double mlw, double s, double cd0App, double cd2App,
-            double cd0Clean, double cd2Clean, double hpDesc, double ctDescHigh,
+            double cd0Clean, double cd2Clean, double hpDesc, double ctDescHigh, double ctDescLow,
             double ctDescApp, double ct1, double ct2, double ct3, double cf1, double cf2)
         {
             Model = model;
@@ -40,6 +40,7 @@ namespace SequencingLib
             CD2Clean = cd2Clean;
             HpDesc = hpDesc;
             CTDescHigh = ctDescHigh;
+            CTDescLow = ctDescLow;
             CTDescApp = ctDescApp;
             CT1 = ct1;
             CT2 = ct2;

@@ -16,13 +16,27 @@ namespace CDOSimulator
             double T0 = 288.15;
             double P0 = 101325;
             double L = 0.0065;
-            double R = 287.05;
+            double R = 287.04;
             double g0 = 9.80665;
+            double hTrop = 11000.0;
 
-            double T = T0 - L * altitudeMeters;
-            double p = P0 * Math.Pow(T / T0, g0 / (R * L));
-            double rho = p / (R * T);
-            return rho;
+            double T;
+            double p;
+
+            if (altitudeMeters <= hTrop)
+            {
+                T = T0 - L * altitudeMeters;
+                p = P0 * Math.Pow(T / T0, g0 / (R * L));
+            }
+            else
+            {
+                double Ttrop = T0 - L * hTrop;   // 216,65 K
+                double pTrop = P0 * Math.Pow(Ttrop / T0, g0 / (R * L));   // ≈ 22632 Pa
+                T = Ttrop;
+                p = pTrop * Math.Exp(-g0 * (altitudeMeters - hTrop) / (R * Ttrop));
+            }
+
+            return p / (R * T);
         }
 
         // 2. CALCULEM LA VELOCITAT QUE MINIMITZA EL DESCENS
@@ -39,30 +53,32 @@ namespace CDOSimulator
         // 3. OBTENIM ELS CD0 i CD2
         public double GetCD0(Aircraft aircraft, double h)
         {
-            if (h < aircraft.HpDesc)
+            if (h <= 6000.0)
                 return aircraft.CD0App;
             else
                 return aircraft.CD0Clean;
         }
         public double GetCD2(Aircraft aircraft, double h)
         {
-            if (h < aircraft.HpDesc)
+            if (h <= 6000.0)
                 return aircraft.CD2App;
             else
                 return aircraft.CD2Clean;
         }
-        
+
         // 4. THRUST DEL MOTOR
         public double CalculateThrust(Aircraft aircraft, double h)
         {
             double ctFactor;
 
-            if (h < aircraft.HpDesc)
-                ctFactor = aircraft.CTDescApp;
-            else
+            if (h > aircraft.HpDesc)
                 ctFactor = aircraft.CTDescHigh;
+            else if (h > 6000.0)
+                ctFactor = aircraft.CTDescLow;
+            else
+                ctFactor = aircraft.CTDescApp;
 
-            double maxThrust = aircraft.CT1 * (1 - (h / aircraft.CT2) + aircraft.CT3*h*h);
+            double maxThrust = aircraft.CT1 * (1 - (h / aircraft.CT2) + aircraft.CT3 * h * h);
             return ctFactor * maxThrust;
         }
 
@@ -77,13 +93,13 @@ namespace CDOSimulator
         // 6. COMBUSTIBLE CREMAT PER SEGON
         public double CalculateFuelBurn(Aircraft aircraft, double thrust, double speed, double deltaT)
         {
-            double fuelFlow = aircraft.CF1 * (1 - (speed / aircraft.CF2)); // Els CF estan en minuts llavors està en kg/min
+            double speedKt = speed * 1.94384;                           // El passem a kts perque el CF2 està en [1/kts]
+            double eta = aircraft.CF1 * (1 + speedKt / aircraft.CF2);   // kg/(min·kN)
+            double fuelFlow = eta * (thrust / 1000.0);                  // kg/min
             double fuelFlowKgPerSec = fuelFlow / 60.0;
 
-            double fuelBurned = fuelFlowKgPerSec * deltaT; // La quantitat de fuel cremat queda negativa
-            return fuelBurned;
+            return fuelFlowKgPerSec * deltaT;   // negatiu perquè integrem enrere
         }
-
 
         // LA SIMULACIÓ PRINCIPAL
         public Trajectory GetCDO(Aircraft aircraft, double mlwPercent)
