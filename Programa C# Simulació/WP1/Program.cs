@@ -45,7 +45,7 @@ namespace CDOSimulator
                 double altFt80 = traj80.H[puntos80 - 1];
 
                 Console.WriteLine("Avió: " + avion.Model + " | 80% MLW");
-                Console.WriteLine("  Segons: " + puntos80 + " | Distància: " + Math.Round(distKm80, 2) + " km | Altitud: " + Math.Round(altFt80, 0) + " ft");
+                Console.WriteLine("  Segons: " + (puntos80 - 1) + " | Distància: " + Math.Round(distKm80, 2) + " km | Altitud: " + Math.Round(altFt80, 0) + " ft");
 
                 // Cas al 100% MLW
                 Trajectory traj100 = sim.GetCDO(avion, 100);
@@ -54,7 +54,7 @@ namespace CDOSimulator
                 double altFt100 = traj100.H[puntos100 - 1];
 
                 Console.WriteLine("Avió: " + avion.Model + " | 100% MLW");
-                Console.WriteLine("  Segons: " + puntos100 + " | Distància: " + Math.Round(distKm100, 2) + " km | Altitud: " + Math.Round(altFt100, 0) + " ft");
+                Console.WriteLine("  Segons: " + (puntos100 - 1) + " | Distància: " + Math.Round(distKm100, 2) + " km | Altitud: " + Math.Round(altFt100, 0) + " ft");
 
                 Console.WriteLine("----------------------------------------------------------");
             }
@@ -97,8 +97,11 @@ namespace CDOSimulator
                 while (s < traj.X.Count && traj.X[s] < distMetres)
                     s++;
                 
+                if (s == traj.X.Count)
+                    throw new InvalidOperationException(avions[i].Model + ": la STAR " + stars[i] + " és més llarga que el perfil fins a FL400");
+
                 tempsVolSegons[i] = s;
-                altitudsEntradaFt[i] = traj.H[s]; // Directament en peus (ft)
+                altitudsEntradaFt[i] = sim.GetAltitudeAtDistance(traj, distMetres); // Directament en peus (ft)
                 toasIAF[i] = horaEntrada.Add(TimeSpan.FromSeconds(s));
             }
 
@@ -190,6 +193,7 @@ namespace CDOSimulator
             TimeSpan[] toasIAF2 = new TimeSpan[6];
             TimeSpan[] horaEntrada2 = new TimeSpan[6];
             int[] delaySegons2 = new int[6];
+            int[] separacioIAF2 = new int[6]; // 0 = primer avió a l'IAF
 
             TimeSpan horaEntradaSTAR = new TimeSpan(11, 45, 0);
 
@@ -203,6 +207,7 @@ namespace CDOSimulator
             {
                 // Cada avión llega exactamente 120 segundos (2 minutos) después del anterior al IAF
                 toasIAF2[i] = toasIAF2[i - 1].Add(TimeSpan.FromSeconds(120));
+                separacioIAF2[i] = (int)(toasIAF2[i] - toasIAF2[i - 1]).TotalSeconds;
 
                 // Su nueva hora de entrada a la STAR es la hora del IAF menos lo que tarda en volar la ruta
                 horaEntrada2[i] = toasIAF2[i].Add(TimeSpan.FromSeconds(-tempsVolSegons[i]));
@@ -213,7 +218,7 @@ namespace CDOSimulator
 
             // 3. Mostramos la tabla requerida por la diapositiva 4
             Console.WriteLine("--- TAULA 1. VOLS ORDENATS PER HORA D'ARRIBADA A L'IAF ---");
-            Console.WriteLine("Aircraft         | STAR    | %MLW         | TOA IAF            | Applied delay               | TOA STAR First WP");
+            Console.WriteLine("Aircraft         | STAR    | %MLW         | Alt. entry WP   | TOA IAF            | Applied delay               | TOA STAR First WP");
             Console.WriteLine("------------------------------------------------------------------------------------------------------------------------");
 
             for (int i = 0; i < 6; i++)
@@ -231,6 +236,7 @@ namespace CDOSimulator
                 Console.WriteLine("Avió: " + avions[i].Model.PadRight(10) +
                                   " | " + stars[i].PadRight(6) +
                                   " | MLW %: " + Convert.ToString(mlwPercents[i]).PadRight(4) + "%" +
+                                  " | ALT: " + Convert.ToString(Math.Round(altitudsEntradaFt[i], 0)).PadRight(5) + " ft" +
                                   " | ARRIBADA: " + toasIAF2[i].ToString(@"hh\:mm\:ss") +
                                   " | DELAY: " + delayTexto.PadRight(20) +
                                   " | ENTRADA STAR: " + horaEntrada2[i]);
@@ -276,6 +282,26 @@ namespace CDOSimulator
                         int tempTemps = tempsVolSegons[j];
                         tempsVolSegons[j] = tempsVolSegons[j + 1];
                         tempsVolSegons[j + 1] = tempTemps;
+
+                        // Intercanviem la separació a l'IAF
+                        int tempSep = separacioIAF2[j];
+                        separacioIAF2[j] = separacioIAF2[j + 1];
+                        separacioIAF2[j + 1] = tempSep;
+
+                        // Intercanviem la TOA de l'escenari 1
+                        TimeSpan tempToa1 = toasIAF[j];
+                        toasIAF[j] = toasIAF[j + 1];
+                        toasIAF[j + 1] = tempToa1;
+
+                        // Intercanviem la distància
+                        double tempDist = distanciesKm[j];
+                        distanciesKm[j] = distanciesKm[j + 1];
+                        distanciesKm[j + 1] = tempDist;
+
+                        // Intercanviem l'altitud d'entrada
+                        double tempAlt = altitudsEntradaFt[j];
+                        altitudsEntradaFt[j] = altitudsEntradaFt[j + 1];
+                        altitudsEntradaFt[j + 1] = tempAlt;
                     }
                 }
             }
@@ -286,7 +312,7 @@ namespace CDOSimulator
             for (int i = 0; i < 6; i++)
             {
                 int orden = i + 1;
-                Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: 120s");
+                Console.WriteLine(orden + ". " + avions[i].Model.PadRight(10) + " | " + stars[i].PadRight(6) + " | Entrada STAR: " + horaEntrada2[i] + " | TOA IAF: " + toasIAF2[i].ToString(@"hh\:mm\:ss") + " | Applied DELAY: " + delaySegons2[i].ToString().PadRight(4) + " s" + " | SEPARATION: " + (separacioIAF2[i] == 0 ? "First at IAF" : separacioIAF2[i] + " s"));
             }
 
             // ==========================================================================================
@@ -335,18 +361,24 @@ namespace CDOSimulator
                     // Llista on guardem les altituds dels avions vius
                     List<double> altitudsReals = new List<double>();
                     string eliminatsText = "";
+                    int perSobreFL400 = 0;
 
                     for (int k = 0; k < 10; k++)
                     {
                         if (viu[k])
                         {
                             double altCDO = sim.GetAltitudeAtWaypoint(trajs[k], wp);
-                            altitudsReals.Add(altCDO); // Afegim l'altitud real a la llista
+                            bool sobreFL400 = double.IsPositiveInfinity(altCDO);
+
+                            if (sobreFL400)
+                                perSobreFL400++;
+                            else
+                                altitudsReals.Add(altCDO); // Afegim l'altitud real a la llista
 
                             if (!wp.IsAltitudeValid(altCDO))
                             {
                                 viu[k] = false;
-                                eliminatsText += "    [X] " + noms[k] + " eliminat (" + Math.Round(altCDO, 0) + " ft)\n";
+                                eliminatsText += "    [X] " + noms[k] + " eliminat (" + (sobreFL400 ? "per sobre de FL400" : Math.Round(altCDO, 0) + " ft") + ")\n";
                             }
                         }
                     }
@@ -360,7 +392,8 @@ namespace CDOSimulator
 
                         Console.WriteLine("Punt " + wp.Name + " (" + Math.Round(wp.DistanceToIAF / 1852.0, 1) + " NM) -> " +
                                           "Limits carta: [" + wp.MinAlt + " - " + wp.MaxAlt + " ft] | " +
-                                          "Rang flota: [" + Math.Round(minReal, 0) + " - " + Math.Round(maxReal, 0) + " ft]");
+                                          "Rang flota: [" + Math.Round(minReal, 0) + " - " + Math.Round(maxReal, 0) + " ft]" +
+                                          (perSobreFL400 > 0 ? " + " + perSobreFL400 + " per sobre de FL400" : ""));
                     }
                     else
                     {

@@ -153,22 +153,40 @@ namespace CDOSimulator
                 mass -= fuelBurned;
             }
 
+            // El bucle calcula el punt que arriba a FL400 però surt abans de guardar-lo
+            trajectory.X.Add(x);
+            trajectory.H.Add(h);
+
             return trajectory;
         }
 
         public double GetAltitudeAtWaypoint(Trajectory trajectory, Waypoint waypoint)
         {
-            // Agafo la trajectoria CDO i el waypoint, recorro els punts fins a trobar el punt del waypoint y retorno la'altitud d'aquest punt'.
-
-            if (trajectory == null || waypoint == null || trajectory.X == null || trajectory.H == null || trajectory.X.Count == 0 || trajectory.H.Count == 0)
+            if (waypoint == null)
                 return double.NaN;
-            
-            int i = 0;
 
-            while (i < trajectory.X.Count - 1 && i < trajectory.H.Count - 1 && trajectory.X[i] < waypoint.DistanceToIAF)
+            return GetAltitudeAtDistance(trajectory, waypoint.DistanceToIAF);
+        }
+
+        // Interpolo linealment entre els dos punts del perfil que envolten la distància.
+        // Si la distància supera el final del perfil, l'avió encara està per sobre de FL400: retorno infinit.
+        public double GetAltitudeAtDistance(Trajectory trajectory, double distance)
+        {
+            if (trajectory == null || trajectory.X == null || trajectory.H == null || trajectory.X.Count == 0 || trajectory.H.Count == 0)
+                return double.NaN;
+
+            if (distance > trajectory.X[trajectory.X.Count - 1])
+                return double.PositiveInfinity;
+
+            int i = 0;
+            while (trajectory.X[i] < distance)
                 i++;
-            
-            return trajectory.H[i];
+
+            if (i == 0)
+                return trajectory.H[0];
+
+            double f = (distance - trajectory.X[i - 1]) / (trajectory.X[i] - trajectory.X[i - 1]);
+            return trajectory.H[i - 1] + f * (trajectory.H[i] - trajectory.H[i - 1]);
         }
     }
 }
